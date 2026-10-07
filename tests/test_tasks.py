@@ -1,5 +1,8 @@
+"""Tests for task CRUD, filters, ownership rules, and the suggest endpoint."""
+
+
 def create_task(client, headers, **fields):
-    """Helper so each test can create a task in one line."""
+    """Create a task in one line; override any field with keyword args."""
     body = {"title": "Test task", **fields}
     return client.post("/tasks", json=body, headers=headers)
 
@@ -13,6 +16,7 @@ def test_create_task(client, auth_headers):
     assert data["title"] == "Buy milk"
     assert data["completed"] is False
     assert data["priority"] == "medium"
+    assert "updated_at" in data
 
 
 def test_create_task_requires_auth(client):
@@ -22,6 +26,11 @@ def test_create_task_requires_auth(client):
 
 def test_create_task_empty_title_fails(client, auth_headers):
     response = create_task(client, auth_headers, title="")
+    assert response.status_code == 422
+
+
+def test_create_task_title_too_long_fails(client, auth_headers):
+    response = create_task(client, auth_headers, title="x" * 201)
     assert response.status_code == 422
 
 
@@ -72,12 +81,24 @@ def test_get_own_task(client, auth_headers):
     task_id = create_task(client, auth_headers).json()["id"]
     response = client.get(f"/tasks/{task_id}", headers=auth_headers)
     assert response.status_code == 200
+    assert response.json()["id"] == task_id
 
 
-def test_get_other_users_task_returns_404(client, auth_headers, other_auth_headers):
+def test_get_missing_task_returns_404(client, auth_headers):
+    response = client.get("/tasks/999", headers=auth_headers)
+    assert response.status_code == 404
+    assert response.json() == {
+        "error": "NotFound",
+        "message": "Task 999 not found",
+        "status_code": 404,
+    }
+
+
+def test_get_other_users_task_returns_403(client, auth_headers, other_auth_headers):
     task_id = create_task(client, auth_headers).json()["id"]
     response = client.get(f"/tasks/{task_id}", headers=other_auth_headers)
-    assert response.status_code == 404
+    assert response.status_code == 403
+    assert response.json()["error"] == "Forbidden"
 
 
 # ---------- UPDATE ----------
@@ -92,12 +113,12 @@ def test_partial_update(client, auth_headers):
     assert response.json()["title"] == "Original"  # unchanged
 
 
-def test_update_other_users_task_returns_404(client, auth_headers, other_auth_headers):
+def test_update_other_users_task_returns_403(client, auth_headers, other_auth_headers):
     task_id = create_task(client, auth_headers).json()["id"]
     response = client.patch(
         f"/tasks/{task_id}", json={"title": "Hacked"}, headers=other_auth_headers
     )
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 # ---------- DELETE ----------
@@ -108,16 +129,15 @@ def test_delete_task(client, auth_headers):
     assert client.get(f"/tasks/{task_id}", headers=auth_headers).status_code == 404
 
 
-def test_delete_other_users_task_returns_404(client, auth_headers, other_auth_headers):
+def test_delete_other_users_task_returns_403(client, auth_headers, other_auth_headers):
     task_id = create_task(client, auth_headers).json()["id"]
     response = client.delete(f"/tasks/{task_id}", headers=other_auth_headers)
-    assert response.status_code == 404
-
+    assert response.status_code == 403
 
 
 # ---------- SUGGEST ----------
 
-def test_suggest_returns_placeholder(client, auth_headers):
+def test_suggest_uses_saved_description(client, auth_headers):
     task_id = create_task(
         client, auth_headers, title="Write report", description="Q3 sales summary"
     ).json()["id"]
@@ -130,10 +150,21 @@ def test_suggest_returns_placeholder(client, auth_headers):
     assert "Write report" in data["suggestion"]
 
 
-def test_suggest_other_users_task_returns_404(client, auth_headers, other_auth_headers):
+def test_suggest_accepts_description_in_body(client, auth_headers):
+    task_id = create_task(client, auth_headers).json()["id"]
+    response = client.post(
+        f"/tasks/{task_id}/suggest",
+        json={"description": "Plan the team offsite"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["description"] == "Plan the team offsite"
+
+
+def test_suggest_other_users_task_returns_403(client, auth_headers, other_auth_headers):
     task_id = create_task(client, auth_headers).json()["id"]
     response = client.post(f"/tasks/{task_id}/suggest", headers=other_auth_headers)
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_suggest_requires_auth(client):

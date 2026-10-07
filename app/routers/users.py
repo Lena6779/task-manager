@@ -1,3 +1,4 @@
+"""User profile endpoints."""
 from fastapi import APIRouter, Depends
 
 from app.models import User

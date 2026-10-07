@@ -37,7 +37,7 @@ def client():
 def auth_headers(client):
     response = client.post(
         "/auth/register",
-        json={"email": "user1@example.com", "password": "password123"},
+        json={"name": "User One","email": "user1@example.com", "password": "password123"},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -47,7 +47,7 @@ def auth_headers(client):
 def other_auth_headers(client):
     response = client.post(
         "/auth/register",
-        json={"email": "user2@example.com", "password": "password123"},
+        json={"name": "User Two","email": "user2@example.com", "password": "password123"},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

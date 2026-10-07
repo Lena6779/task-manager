@@ -3,7 +3,7 @@ uvicorn[standard]
 sqlalchemy
 pydantic-settings
 pyjwt
-pwdlib[argon2]
+bcrypt
 python-multipart
 email-validator
 pytest
