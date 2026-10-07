@@ -14,29 +14,31 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     """Public user profile.
-    Intentionally has NO password field, so the hash can NEVER be returned to a client for security reasons.
+
+    Intentionally has no password field, so the hash can never be
+    returned to a client.
     """
+
     id: int = Field(..., ge=1)
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    is_active:  bool
-    created_at: datetime 
+    is_active: bool
+    created_at: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
-            "example":{
+            "example": {
                 "id": 1,
-                "name": "Dyson Thorne",
-                "email": "dyson.thorne@example.com",
-                "is_active": bool,
-                "created_at": "2023-01-01T00:00:00"
+                "name": "Lena",
+                "email": "lena@example.com",
+                "is_active": True,
+                "created_at": "2026-10-06T13:00:00",
             }
-        }
+        },
+    )
 
-        )
-
-
+    
 class Token(BaseModel):
     """JWT access token returned after register or login."""
     access_token: str = Field(..., min_length=1)
