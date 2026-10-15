@@ -50,11 +50,11 @@ class TaskResponse(TaskBase):
 
 class SuggestRequest(BaseModel):
     """Optional body for the suggest endpoint.
-    If no descriptionm is sent, the task's saved description is used.""" 
+    If no description is sent, the task's saved description is used.""" 
     description: str | None =Field(None, min_length=1, max_length=2000)                           
 
 class TaskSuggestion(BaseModel):
-    """Response from the sugesstion endpoint."""
+    """Response from the suggestion endpoint."""
     task_id: int = Field(..., ge=1)
     description: str = Field(..., min_length=1, max_length=2000)
     suggestion: str = Field(..., min_length=1)

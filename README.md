@@ -1,9 +1,10 @@
 # Task Manager API
 
-A task management REST API built with FastAPI. Users register, log in with a JWT, and manage their own tasks. Every task endpoint is protected, and users can only access tasks they own.
+A task management REST API built with FastAPI, plus a Streamlit frontend. Users register, log in with a JWT, and manage their own tasks. Every task endpoint is protected, and users can only access tasks they own.
 
 ## Features
 
+- **Streamlit frontend** (`my_frontend.py`) with login/logout, task metrics, a task list with completion toggles, and an add-task form
 - **JWT authentication** with expiring tokens and bcrypt password hashing
 - **Task CRUD** with filtering by `completed` and `priority`, plus pagination
 - **Ownership rules**: accessing another user's task returns `403 Forbidden`
@@ -15,7 +16,7 @@ A task management REST API built with FastAPI. Users register, log in with a JWT
 
 ## Tech Stack
 
-FastAPI · SQLAlchemy · SQLite · Pydantic · PyJWT · bcrypt · pytest
+FastAPI · SQLAlchemy · SQLite · Pydantic · PyJWT · bcrypt · pytest · Streamlit · requests
 
 ## Project Structure
 
@@ -31,6 +32,7 @@ task-manager/
 │   ├── routers/           # Endpoints: auth, users, tasks
 │   └── utils/             # Auth helpers, ownership check, background tasks
 ├── tests/                 # pytest suite
+├── my_frontend.py         # Streamlit frontend
 ├── requirements.txt
 └── pytest.ini
 ```
@@ -75,6 +77,10 @@ The app will not start without `SECRET_KEY`. Never commit `.env` to version cont
 
 ## Running the App
 
+The backend and frontend run in two separate terminals. Start the backend first.
+
+### 1. Start the backend
+
 ```bash
 uvicorn app.main:app --reload
 ```
@@ -85,7 +91,25 @@ The database tables are created automatically on startup.
 - Swagger UI: http://127.0.0.1:8000/docs
 - ReDoc: http://127.0.0.1:8000/redoc
 
-### Logging in through `/docs`
+### 2. Start the frontend
+
+With the backend running, open a second terminal, activate the venv, and run:
+
+```bash
+streamlit run my_frontend.py
+```
+
+Then open http://localhost:8501 and log in with your email and password. If you don't have an account yet, register one first (see below).
+
+The frontend:
+
+- Stores the JWT in Streamlit session state and shows the logged-in user in the sidebar
+- Displays metric cards for total, completed, and pending tasks
+- Lists all your tasks with their status and priority, with a **Mark done** / **Undo** button on each
+- Includes a form to add new tasks
+- Shows a clear message if the backend isn't running, and returns you to the login page if your token expires (401)
+
+### Registering and logging in through `/docs`
 
 1. Call `POST /auth/register` with a name, email, and password (8+ characters).
 2. Click the **Authorize** button at the top of the page.
@@ -130,7 +154,7 @@ Example: `GET /tasks?priority=high&completed=false&limit=10`
 
 **User**: `id`, `name`, `email` (unique), `hashed_password`, `is_active`, `created_at`
 
-**Task**: `id`, `title` (1–200 chars), `description` (up to 2000 chars), `priority` (`low` / `medium` / `high`), `completed`, `user_id` (foreign key), `created_at`, `updated_at`
+**Task**: `id`, `title` (1–200 chars), `description` (up to 1000 chars), `priority` (`low` / `medium` / `high`), `completed`, `user_id` (foreign key), `created_at`, `updated_at`
 
 Passwords are stored only as bcrypt hashes and never appear in any API response.
 
