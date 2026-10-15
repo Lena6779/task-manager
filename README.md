@@ -4,7 +4,7 @@ A task management REST API built with FastAPI, plus a Streamlit frontend. Users 
 
 ## Features
 
-- **Streamlit frontend** (`my_frontend.py`) with login/logout, task metrics, a task list with completion toggles, and an add-task form
+- - **Streamlit frontend** (`my_frontend.py`) with login/logout, task metrics, a task list with completion toggles and delete buttons, and an add-task form
 - **JWT authentication** with expiring tokens and bcrypt password hashing
 - **Task CRUD** with filtering by `completed` and `priority`, plus pagination
 - **Ownership rules**: accessing another user's task returns `403 Forbidden`
@@ -105,7 +105,7 @@ The frontend:
 
 - Stores the JWT in Streamlit session state and shows the logged-in user in the sidebar
 - Displays metric cards for total, completed, and pending tasks
-- Lists all your tasks with their status and priority, with a **Mark done** / **Undo** button on each
+- Lists all your tasks with their status and priority, with **Mark Completed** / **Undo** and **Delete** buttons on each
 - Includes a form to add new tasks
 - Shows a clear message if the backend isn't running, and returns you to the login page if your token expires (401)
 
