@@ -84,6 +84,10 @@ def toggle_task(task_id, completed):  # Wanted a way to say that a task was comp
         headers=auth_headers(),
     )
 
+def delete_task(task_id):
+    """Remove a task permanently."""
+    return api_request("DELETE", f"{TASKS_ENDPOINT}/{task_id}", headers=auth_headers())
+
 # --- Pages ---
 def login_page():
     st.title("🔐 Task Manager Login")
@@ -179,7 +183,20 @@ def dashboard_page():
                         st.rerun()
                     else:
                         st.error(f"Couldn't update the task (status {response.status_code}).")
-
+                if st.button("🗑️ Delete", key=f"delete_{task['id']}"):
+                    try:
+                        response = delete_task(task["id"])
+                    except BackendUnreachable:
+                        show_backend_down()
+                        return
+                    if response.status_code == 401:
+                        logout("Your session expired. Please log in again.")
+                    if response.status_code == 204:
+                        st.session_state.flash = f"Deleted '{task['title']}'."
+                        st.rerun()
+                    else:
+                        st.error(f"Couldn't delete the task (status {response.status_code}).")
+    
     st.divider()
 
     # --- Add task form ---
